@@ -1,0 +1,94 @@
+/* Description: To test absolute touch on two capsense pins using a common receive pin.
+  The file outputs RC time constant values (need to confirm with scope) to the serial monitor. 
+  These are the return value outputted by capsense library function
+*/
+#include <CapacitiveSensor.h>
+
+/*
+ * Uses a high value resistor e.g. 10 megohm between send pin and receive pin
+ * Resistor effects sensitivity, experiment with values, 50 kilohm - 50 megohm. Larger resistor values yield larger sensor values.
+ * Receive pin is the sensor pin - try different amounts of foil/metal on this pin
+ * Best results are obtained if sensor foil and wire is covered with an insulator such as paper or plastic sheet
+ */
+
+
+CapacitiveSensor   cs_4_2 = CapacitiveSensor(4,2);        // 10 megohm resistor between pins 4 & 2, pin 2 is sensor pin, add wire, foil
+CapacitiveSensor   cs_4_5 = CapacitiveSensor(4,5);        // 10 megohm resistor between pins 4 & 6, pin 6 is sensor pin, add wire, foil
+//CapacitiveSensor   cs_4_8 = CapacitiveSensor(4,8);        // 10 megohm resistor between pins 4 & 8, pin 8 is sensor pin, add wire, foil
+int LEDPin = 13;
+//int LEDPin1 = 12;
+int LEDPin2 = 12;
+long touchedCutoff = 1000;
+int counter = 0;
+
+void setup()                    
+{
+
+   cs_4_2.set_CS_AutocaL_Millis(0xFFFFFFFF);     // turn off autocalibrate on channel 1 - just as an example
+   Serial.begin(38400); // The baud rate affects the counter value transmission, ie. it takes more time for the LEDpin1 to turn on at slower baud rates. At 57600, it took a little less than 3 seconds for counter = 300 at 1 millis delay
+   pinMode(LEDPin, OUTPUT);
+   digitalWrite(LEDPin, LOW);
+//   pinMode(LEDPin1, OUTPUT);
+//   digitalWrite(LEDPin1, LOW);
+   pinMode(LEDPin2, OUTPUT);
+   digitalWrite(LEDPin2, LOW);
+      
+   
+}
+
+
+unsigned long previous = 0;
+
+void loop()                    
+{
+  
+  unsigned long current = millis();
+  int interval = 10;
+  
+  if(current - previous >= interval){
+    previous = current;
+    long start = millis();
+    long total1 =  cs_4_2.capacitiveSensor(30);
+   long total2 =  cs_4_5.capacitiveSensor(30);
+    //long total3 =  cs_4_8.capacitiveSensor(30);
+
+  if (total1 > touchedCutoff) {
+    digitalWrite(LEDPin, HIGH);
+    counter += 10;
+  }
+  else {
+    digitalWrite(LEDPin, LOW);
+    counter = 0;
+  }
+
+  if (total2 > touchedCutoff){
+    
+    digitalWrite(LEDPin2, HIGH);
+  }
+
+  else {
+    digitalWrite(LEDPin2, LOW);
+  }
+
+    //Serial.print(millis() - start);        // check on performance in milliseconds
+    Serial.print("\t");                    // tab character for debug window spacing
+
+    Serial.print(total1);                  // print sensor output 1
+    
+   // Serial.print("\t");
+ //   Serial.print(counter);
+   Serial.print(total2);                  // print sensor output 2
+    Serial.print("\t");
+   // Serial.println(total3);                // print sensor output 3
+
+  /*  if (counter > 10000) {
+      digitalWrite(LEDPin1, HIGH);
+    }
+    else {
+      digitalWrite(LEDPin1, LOW);
+    }
+*/
+  }
+   // delay(10);                             // arbitrary delay to limit data to serial port 
+}
+
